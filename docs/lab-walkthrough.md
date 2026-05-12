@@ -2,42 +2,50 @@
 
 ## Goal
 
-The goal of this lab was to start moving away from a flat `192.168.1.0/24` home LAN and prove a safer segmented design path using a dedicated `Qotom` firewall running `OPNsense`.
+The goal of this lab was to stop treating the whole home environment as one shared trust zone and to prove a safer migration path with `OPNsense` on a `Qotom` firewall appliance.
 
-The lab was intentionally staged:
+This phase did not try to redesign the entire house in one session. The target was narrower and more realistic:
 
-1. document the current network before changing anything
-2. verify the existing switch and core devices
-3. bring up OPNsense behind the existing router
-4. fix interface and reachability issues
-5. rebuild the OPNsense LAN on a clean subnet
-6. verify DHCP, NAT, DNS, and routing
-7. restrict access back into the home LAN while preserving the specific systems needed for lab work
+1. document the flat network first
+2. bring up the firewall behind the existing Spectrum router
+3. recover safe management access
+4. remove stale configuration
+5. rebuild a clean routed lab subnet
+6. validate DHCP, NAT, DNS, and internet access
+7. enforce a first-pass access policy back to the old LAN
 
-## Starting Point
+## Phase 1: Baseline the Flat LAN
 
 The original production network was flat:
 
 - subnet: `192.168.1.0/24`
 - gateway: `192.168.1.1`
-- switch: `192.168.1.117`
 - `MAIN-PC`: `192.168.1.167`
 - `asus-server`: `192.168.1.221`
 - `pi-core` / Pi-hole: `192.168.1.224`
+- Netgear GS308EP: `192.168.1.117`
 
-Baseline evidence:
+The first step was evidence gathering. Before changing anything, the lab documented:
+
+- adapter addressing on `MAIN-PC`
+- baseline connectivity to the gateway and Pi-hole
+- DNS resolution and internet path
+- the shared visibility of lab devices on the flat LAN
+
+Evidence:
 
 - `assets/screenshots/01-main-pc-current-ipconfig.png`
 - `assets/screenshots/02-main-pc-baseline-connectivity.png`
-- `assets/screenshots/03-current-lan-device-discovery-a.png`
-- `assets/screenshots/03-current-lan-device-discovery-b.png`
-- `assets/screenshots/03-current-lan-device-discovery-c.png`
+- `assets/screenshots/03-main-pc-arp-baseline.png`
+- `assets/screenshots/04-current-lan-device-discovery-a.png`
+- `assets/screenshots/05-current-lan-device-discovery-b.png`
+- `assets/screenshots/06-current-lan-device-discovery-c.png`
 
-## Switch and Physical Topology
+## Phase 2: Document the Existing Physical Topology
 
-Before touching OPNsense, the switch was documented as the current physical aggregation point.
+Before changing firewall behavior, the switch and cabling were documented. That made the later interface troubleshooting much easier because the physical assumptions were visible and testable.
 
-Observed mapping:
+Observed switch map:
 
 - Port 1: router
 - Port 2: `MAIN-PC`
@@ -49,81 +57,122 @@ Observed mapping:
 
 Evidence:
 
-- `assets/screenshots/04-current-switch-physical-port-map.png`
-- `assets/screenshots/05-netgear-switch-management-access.png`
+- `assets/screenshots/07-current-switch-physical-port-map.png`
+- `assets/screenshots/08-netgear-switch-management-access.png`
 
-## Initial OPNsense Discovery
+## Phase 3: Discover Why OPNsense Was Not Reachable
 
-The first access problem was not a software failure. It was interface placement.
+After the Qotom was powered on, the first assumption was that it might simply be reachable somewhere on the existing `192.168.1.0/24` LAN. That assumption failed.
 
-At first, the OPNsense console showed:
+At this point:
 
-- `LAN` on `192.168.1.250/24`
-- `WAN` on `192.168.1.142/24`
-- leftover `VLAN20_LAB` on `10.10.20.1/24`
+- common candidate management IPs did not answer
+- `MAIN-PC` could not reach the expected OPNsense GUI
+- the OPNsense console still showed interface state and old lab configuration
 
-But the connected Ethernet cable was on the active `WAN` interface instead of the isolated `LAN` interface. That explained why `MAIN-PC` on the production switch side could not reach the OPNsense management IP.
-
-Evidence:
-
-- `assets/screenshots/06-qotom-ip-discovery-attempt.png`
-- `assets/screenshots/07-qotom-powered-on-physical-connections.png`
-- `assets/screenshots/08-opnsense-interface-link-status.png`
-
-## Safe Management Path
-
-Instead of plugging OPNsense LAN into the production switch immediately, Linux Mint was connected directly to the OPNsense LAN port with a USB-to-Ethernet adapter.
-
-That direct connection made it possible to:
-
-- isolate management traffic
-- avoid accidental DHCP conflicts on the production LAN
-- verify the OPNsense LAN interface independently
-
-From there, the OPNsense web UI became reachable and the existing configuration could be documented safely.
-
-## Cleanup of Old State
-
-The firewall already had leftover lab state:
-
-- `VLAN20_LAB`
-- `vlan01`
-- old `10.10.20.0/24` addressing
-
-Rather than build new segmentation on top of mixed old state, the stale VLAN assignment and VLAN device were removed. That left a cleaner baseline:
-
-- `LAN -> igb0`
-- `WAN -> igb1`
+The key discovery was that the connected Ethernet cable was on the active `WAN` side while the `LAN` interface, which carried the management address, had no carrier.
 
 Evidence:
 
-- `assets/screenshots/09-opnsense-interface-assignments-before-cleanup.png`
-- `assets/screenshots/10-opnsense-interface-assignments-after-cleanup.png`
+- `assets/screenshots/09-qotom-ip-discovery-attempt.png`
+- `assets/screenshots/10-qotom-powered-on-physical-connections.png`
+- `assets/screenshots/15-opnsense-interface-link-status.png`
 
-## New Base LAN
+## Phase 4: Recover Safe LAN-Side Access
 
-The OPNsense LAN was rebuilt as a fresh management/lab segment:
+Instead of plugging the OPNsense `LAN` into the production switch and risking a DHCP conflict, Linux Mint was connected directly to the Qotom `LAN` port with a USB-to-Ethernet adapter.
 
-- OPNsense LAN: `10.10.10.1/24`
-- DHCP pool: `10.10.10.100 - 10.10.10.199`
+That direct connection mattered because it:
+
+- isolated the management path from the live house network
+- avoided introducing a second DHCP source onto the flat LAN
+- made it possible to inspect and change the firewall from the correct side
+
+The first direct-connect state still showed the adapter without a useful IPv4 address. That became its own checkpoint in the troubleshooting story.
+
+Evidence:
+
+- `assets/screenshots/11-direct-linux-mint-to-qotom-lan.png`
+- `assets/screenshots/12-linux-mint-direct-link-before-dhcp.png`
+
+## Phase 5: Back Up Before Rebuilding
+
+Before editing anything significant, the existing OPNsense configuration was downloaded and preserved locally as a rollback point.
+
+That matters because the firewall already contained previous lab state:
+
+- old VLAN definitions
+- old DHCP-related settings
+- interface assignments that no longer matched the new design
+
+Evidence:
+
+- `assets/screenshots/13-opnsense-backup-page.png`
+- `assets/screenshots/14-opnsense-backup-file-renamed.png`
+
+## Phase 6: Identify and Remove Stale State
+
+The appliance already had a leftover `VLAN20_LAB` configuration attached to the `LAN` side. Rather than build new segmentation on top of mixed old state, that configuration was explicitly documented and then removed.
+
+Important stale findings:
+
+- `VLAN20_LAB` existed as a VLAN device
+- the firewall still carried old DHCP-related state for `10.10.20.0/24`
+- Kea was not initially enabled for the new lab path
+
+Cleanup target:
+
+- keep only `LAN -> igb0`
+- keep only `WAN -> igb1`
+- remove the stale VLAN device
+- rebuild the new lab on an intentional subnet
+
+Evidence:
+
+- `assets/screenshots/16-opnsense-old-vlan-device.png`
+- `assets/screenshots/17-opnsense-interface-assignments-before-cleanup.png`
+- `assets/screenshots/19-opnsense-vlan-device-removed.png`
+- `assets/screenshots/20-opnsense-kea-disabled.png`
+- `assets/screenshots/21-opnsense-dnsmasq-old-dhcp-range.png`
+
+## Phase 7: Readdress the OPNsense LAN
+
+The firewall `LAN` was moved off the original home subnet and rebuilt as a fresh lab-management network:
+
+- OPNsense `LAN`: `10.10.10.1/24`
+- target client range: `10.10.10.100 - 10.10.10.199`
 - domain: `lab.local`
 
-Kea DHCP was enabled for the new LAN.
+This change was the real foundation of the lab. Without it, the client would still just be another peer on `192.168.1.0/24`.
 
 Evidence:
 
-- `assets/screenshots/11-opnsense-kea-dhcp-lan-mgmt-subnet.png`
-- `assets/screenshots/12-opnsense-kea-dhcp-lease-renewal.png`
+- `assets/screenshots/18-opnsense-lan-readdressed-10-10-10-1.png`
+- `assets/screenshots/22-opnsense-kea-enabled-settings.png`
+- `assets/screenshots/23-opnsense-kea-dhcp-lan-mgmt-subnet.png`
 
-## Routing and DNS Validation
+## Phase 8: Validate DHCP and Catch the First Routing Failure
 
-Once the lab client received DHCP from OPNsense, the next problem was outbound routing. That was fixed by keeping OPNsense in a behind-the-router design and allowing the WAN to operate on a private upstream network.
+Once Linux Mint started receiving DHCP from OPNsense, the lab still was not finished. There was an intermediate state where:
 
-The validated path became:
+- the client could reach `10.10.10.1`
+- the client could reach `192.168.1.1`
+- the client still could not reach `1.1.1.1`
+
+That checkpoint matters because it proves the lab did not simply "work immediately." DHCP success was separate from full routing and outbound internet success.
+
+Evidence:
+
+- `assets/screenshots/24-opnsense-wan-routing-failure-before-fix.png`
+- `assets/screenshots/25-opnsense-kea-dhcp-lease-renewal.png`
+
+## Phase 9: Validate the Working Routed Segment
+
+After WAN-side policy and routing issues were corrected, the routed lab path became:
 
 `Linux Mint 10.10.10.100 -> OPNsense 10.10.10.1 -> Spectrum router 192.168.1.1 -> internet`
 
-The final validated client state was:
+The working client state was:
 
 - IP address: `10.10.10.100/24`
 - default gateway: `10.10.10.1`
@@ -132,49 +181,48 @@ The final validated client state was:
 
 Evidence:
 
-- `assets/screenshots/14-routed-lab-validation.png`
+- `assets/screenshots/26-opnsense-dashboard-post-fix.png`
+- `assets/screenshots/28-routed-lab-validation.png`
 
-## Access-Control Policy
+## Phase 10: Apply Controlled Access Back to the Old LAN
 
-The key policy objective was not "block everything." It was "allow the lab client to reach the systems needed for administration and validation, but stop broad access to unrelated home-LAN devices."
+The goal was not to isolate the lab client from everything. The goal was to preserve the systems needed for work while blocking the rest of the shared home LAN.
 
-Allowed exceptions:
+Allowed systems:
 
-- `pi-core` / Pi-hole: `192.168.1.224`
-- `asus-server`: `192.168.1.221`
-- `MAIN-PC`: `192.168.1.167`
-- OPNsense web UI on the LAN address
+- `pi-core` / Pi-hole at `192.168.1.224`
+- `asus-server` at `192.168.1.221`
+- `MAIN-PC` at `192.168.1.167`
+- the OPNsense web UI on the lab `LAN`
 
-Blocked:
+Blocked outcome:
 
-- general `192.168.1.0/24` devices not explicitly allowed
-
-Internet remained allowed.
+- unrelated home-LAN devices such as the printer and TV
 
 Evidence:
 
-- `assets/screenshots/13-opnsense-lan-firewall-rules.png`
-- `assets/screenshots/15-blocked-home-lan-devices.png`
+- `assets/screenshots/27-opnsense-lan-firewall-rules.png`
+- `assets/screenshots/29-service-level-validation.png`
+- `assets/screenshots/30-blocked-home-lan-devices.png`
 
-## What This Lab Proved
+## What the Lab Proved
 
 This phase proved that:
 
-- the lab client can operate from a separate routed subnet behind OPNsense
-- access to the original flat LAN can be selectively controlled
-- internet access, DNS, and service access can remain functional during the transition
-- the right sequencing is critical:
+- a client can be removed from the flat home LAN without replacing the entire house network in one cutover
+- `OPNsense` can safely sit behind the existing Spectrum router as a staged firewall platform
+- the right management sequence is critical:
   - baseline first
-  - backup before changes
-  - direct-manage the LAN side
-  - clean up old state
-  - rebuild the foundation
-  - then apply policy
+  - backup before edits
+  - direct-manage the `LAN` side
+  - remove stale state
+  - then rebuild the subnet and policy
+- selective access control is more practical than an all-at-once redesign
 
 ## Current State
 
 The entire home network is not fully VLAN-segmented yet.
 
-But the Linux Mint lab client is no longer a flat peer on the original home subnet. It now lives behind OPNsense on `10.10.10.0/24`, with explicit routing and firewall control back into `192.168.1.0/24`.
+What changed is that the Linux Mint test client is no longer a flat peer on `192.168.1.0/24`. It now operates from `10.10.10.0/24` behind OPNsense, with explicit policy controlling what it can reach back on the old home LAN.
 
-That makes this a successful first segmentation milestone, not just a theory exercise.
+That makes this a real segmentation milestone, not just a planning exercise.
