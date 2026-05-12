@@ -1,0 +1,6 @@
+# Local-only firewall backups
+*.xml
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
