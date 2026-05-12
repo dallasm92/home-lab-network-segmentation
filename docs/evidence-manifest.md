@@ -1,84 +1,93 @@
 # Evidence Manifest
 
-This manifest maps the curated screenshots to the lab story in chronological order.
+This manifest maps the curated screenshots to the lab story in chronological order. Each image supports a specific point in the case study rather than serving as a loose screenshot dump.
 
-## Flat-LAN Baseline
+## Phase 1: Baseline the Flat LAN
 
-- `01-main-pc-current-ipconfig.png`
-  - proves `MAIN-PC` started on the original flat `192.168.1.0/24` LAN
-- `02-main-pc-baseline-connectivity.png`
-  - proves the gateway, Pi-hole DNS, and internet path worked before firewall changes
-- `03-main-pc-arp-baseline.png`
-  - shows baseline ARP visibility from `MAIN-PC` on the shared LAN
-- `04-current-lan-device-discovery-a.png`
-  - shows baseline hostname and device discovery on the flat LAN
-- `05-current-lan-device-discovery-b.png`
-  - confirms `asus-server` resolution and reachability on the original network
-- `06-current-lan-device-discovery-c.png`
-  - confirms `pi-core` resolution and reachability on the original network
+- `assets/screenshots/01-main-pc-current-ipconfig.png`
+  - Proves `MAIN-PC` started on the original flat `192.168.1.0/24` network with expected baseline addressing.
+- `assets/screenshots/02-main-pc-baseline-connectivity.png`
+  - Proves gateway, DNS, and outbound connectivity were working before any firewall changes.
+- `assets/screenshots/03-main-pc-arp-baseline.png`
+  - Proves broad peer visibility on the flat LAN before segmentation.
+- `assets/screenshots/04-current-lan-device-discovery-a.png`
+  - Proves the first portion of baseline device discovery on the original home LAN.
+- `assets/screenshots/05-current-lan-device-discovery-b.png`
+  - Proves `asus-server` was visible and reachable during the baseline stage.
+- `assets/screenshots/06-current-lan-device-discovery-c.png`
+  - Proves `pi-core` was visible and reachable during the baseline stage.
 
-## Existing Physical Topology
+## Phase 2: Document Physical Topology
 
-- `07-current-switch-physical-port-map.png`
-  - documents the pre-change switch cabling and physical topology
-- `08-netgear-switch-management-access.png`
-  - proves managed-switch reachability and the active production link state
+- `assets/screenshots/07-current-switch-physical-port-map.png`
+  - Proves the pre-change labeled switch cabling layout and physical baseline.
+- `assets/screenshots/08-netgear-switch-management-access.png`
+  - Proves switch management access existed before firewall changes.
 
-## Early OPNsense Discovery
+## Phase 3: OPNsense Discovery Problem
 
-- `09-qotom-ip-discovery-attempt.png`
-  - documents failed assumptions about the firewall being directly reachable from the production LAN
-- `10-qotom-powered-on-physical-connections.png`
-  - shows the Qotom appliance powered on and physically connected
-- `11-direct-linux-mint-to-qotom-lan.png`
-  - shows the direct Linux Mint to Qotom `LAN` management path
-- `12-linux-mint-direct-link-before-dhcp.png`
-  - shows the direct link state before the Linux Mint adapter had a useful IPv4 address
+- `assets/screenshots/09-qotom-ip-discovery-attempt.png`
+  - Proves the first production-LAN discovery attempt for the firewall failed.
+- `assets/screenshots/10-qotom-powered-on-physical-connections.png`
+  - Proves the Qotom appliance was powered on and physically connected during discovery troubleshooting.
+- `assets/screenshots/15-opnsense-interface-link-status.png`
+  - Captures additional recovery-side network state from the isolated management path after production-side discovery failed.
 
-## Backup and Safe Rebuild Prep
+## Phase 4: Safe LAN-Side Recovery
 
-- `13-opnsense-backup-page.png`
-  - shows the OPNsense configuration backup page before changes
-- `14-opnsense-backup-file-renamed.png`
-  - proves the rollback backup was downloaded and retained locally
-- `15-opnsense-interface-link-status.png`
-  - proves the cable was on the active `WAN` interface while `LAN` had no carrier
+- `assets/screenshots/11-direct-linux-mint-to-qotom-lan.png`
+  - Proves I created an isolated management path by connecting Linux Mint directly to the Qotom `LAN` port.
+- `assets/screenshots/12-linux-mint-direct-link-before-dhcp.png`
+  - Proves the direct management link existed before Linux Mint had a useful DHCP result.
 
-## Cleanup of Stale Firewall State
+## Phase 5: Backup Before Changes
 
-- `16-opnsense-old-vlan-device.png`
-  - documents the leftover `VLAN20_LAB` device before cleanup
-- `17-opnsense-interface-assignments-before-cleanup.png`
-  - shows the old interface-assignment state before removing the VLAN lab config
-- `18-opnsense-lan-readdressed-10-10-10-1.png`
-  - shows the rebuilt `LAN` interface at `10.10.10.1/24`
-- `19-opnsense-vlan-device-removed.png`
-  - proves the stale VLAN device was removed
-- `20-opnsense-kea-disabled.png`
-  - shows that Kea DHCP was initially disabled
-- `21-opnsense-dnsmasq-old-dhcp-range.png`
-  - documents the old DHCP-related state left behind from the previous lab
+- `assets/screenshots/13-opnsense-backup-page.png`
+  - Proves I captured the firewall configuration from the OPNsense backup page before making changes.
+- `assets/screenshots/14-opnsense-backup-file-renamed.png`
+  - Proves the downloaded backup was retained locally as a rollback artifact.
 
-## Rebuild of the New Lab Network
+## Phase 6: Remove Stale Firewall State
 
-- `22-opnsense-kea-enabled-settings.png`
-  - shows Kea DHCP enabled on `LAN`
-- `23-opnsense-kea-dhcp-lan-mgmt-subnet.png`
-  - documents the new `10.10.10.0/24` LAN-MGMT subnet and DHCP pool
-- `24-opnsense-wan-routing-failure-before-fix.png`
-  - captures the intermediate failure where DHCP worked but outbound internet did not
-- `25-opnsense-kea-dhcp-lease-renewal.png`
-  - proves Linux Mint received a DHCP lease from OPNsense
-- `26-opnsense-dashboard-post-fix.png`
-  - shows the post-fix OPNsense state after the routed lab segment was working
+- `assets/screenshots/16-opnsense-old-vlan-device.png`
+  - Proves the firewall still had a leftover `VLAN20_LAB` device before cleanup.
+- `assets/screenshots/17-opnsense-interface-assignments-before-cleanup.png`
+  - Proves the pre-cleanup interface assignment state was documented instead of hidden.
+- `assets/screenshots/19-opnsense-vlan-device-removed.png`
+  - Proves the stale VLAN device was removed before the rebuild.
+- `assets/screenshots/20-opnsense-kea-disabled.png`
+  - Proves Kea DHCP was not initially enabled when I assessed the stale state.
+- `assets/screenshots/21-opnsense-dnsmasq-old-dhcp-range.png`
+  - Proves old DHCP-related state was still present and needed to be cleaned up.
 
-## Final Policy and Validation
+## Phase 7: Rebuild LAN on 10.10.10.0/24
 
-- `27-opnsense-lan-firewall-rules.png`
-  - documents the selective allow-plus-block policy on the lab `LAN`
-- `28-routed-lab-validation.png`
-  - proves routed internet and DNS validation from the new lab subnet
-- `29-service-level-validation.png`
-  - proves service-level reachability to allowed hosts, not just ICMP
-- `30-blocked-home-lan-devices.png`
-  - proves at least some non-allowed home-LAN devices were blocked from the lab client
+- `assets/screenshots/18-opnsense-lan-readdressed-10-10-10-1.png`
+  - Proves the rebuilt `LAN` interface was moved to `10.10.10.1/24`.
+- `assets/screenshots/22-opnsense-kea-enabled-settings.png`
+  - Proves Kea DHCP was enabled for the new lab design.
+- `assets/screenshots/23-opnsense-kea-dhcp-lan-mgmt-subnet.png`
+  - Proves the new `10.10.10.0/24` subnet and DHCP scope were defined on the firewall.
+
+## Phase 8: DHCP Success but Routing Failure
+
+- `assets/screenshots/24-opnsense-wan-routing-failure-before-fix.png`
+  - Proves there was an intermediate failure where DHCP worked but routed internet access did not.
+- `assets/screenshots/25-opnsense-kea-dhcp-lease-renewal.png`
+  - Proves Linux Mint received a DHCP lease from OPNsense on the new subnet.
+
+## Phase 9: Working Routed Segment
+
+- `assets/screenshots/26-opnsense-dashboard-post-fix.png`
+  - Proves the firewall was in a post-fix working state after the WAN-side issue was corrected.
+- `assets/screenshots/28-routed-lab-validation.png`
+  - Proves the Linux Mint client had a working routed path from `10.10.10.0/24` through OPNsense.
+
+## Phase 10: Controlled Access Back to the Old LAN
+
+- `assets/screenshots/27-opnsense-lan-firewall-rules.png`
+  - Proves the final policy was selective access rather than open-ended trust.
+- `assets/screenshots/29-service-level-validation.png`
+  - Proves the client could still reach allowed services and hosts after policy enforcement.
+- `assets/screenshots/30-blocked-home-lan-devices.png`
+  - Proves access to specific unrelated home-LAN IPs was blocked from the lab client after the policy was applied.
