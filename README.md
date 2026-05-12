@@ -41,6 +41,10 @@ Ending state for this phase:
 
 This is not the final whole-house VLAN design yet. It is the first successful routed and firewalled segment behind `OPNsense`.
 
+## Topology Diagram
+
+![Before and after topology](assets/diagrams/topology-before-after.svg)
+
 ## Why This Lab Matters
 
 This repo shows:
