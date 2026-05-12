@@ -49,9 +49,11 @@ Build a safer first segmentation step without disrupting the production home net
 
 ## Before / After Topology
 
-![Before and after topology](assets/diagrams/topology-before-after.svg)
+Topology reference:
 
-This diagram shows the actual scope of the repo:
+- [assets/diagrams/topology-before-after.svg](assets/diagrams/topology-before-after.svg)
+
+This topology shows the actual scope of the repo:
 
 - before: one flat `192.168.1.0/24` home LAN
 - after: one staged routed lab segment behind `OPNsense`, while the rest of the house remains on the original network
@@ -67,19 +69,54 @@ This diagram shows the actual scope of the repo:
 | Access control | Preserved access to needed lab systems while blocking unrelated home-LAN devices |
 | Documentation quality | Full walkthrough plus screenshot-by-screenshot evidence map |
 
-## Lab Summary
+## Evidence Set
+
+Screenshots are stored in [`assets/screenshots/`](assets/screenshots/).
+
+Primary references for this README:
+
+1. [01-main-pc-current-ipconfig.png](assets/screenshots/01-main-pc-current-ipconfig.png) - baseline `MAIN-PC` state on the flat LAN
+2. [07-current-switch-physical-port-map.png](assets/screenshots/07-current-switch-physical-port-map.png) - physical switch and cabling baseline
+3. [09-qotom-ip-discovery-attempt.png](assets/screenshots/09-qotom-ip-discovery-attempt.png) - failed production-side firewall discovery
+4. [11-direct-linux-mint-to-qotom-lan.png](assets/screenshots/11-direct-linux-mint-to-qotom-lan.png) - isolated recovery path from Linux Mint to `OPNsense LAN`
+5. [18-opnsense-lan-readdressed-10-10-10-1.png](assets/screenshots/18-opnsense-lan-readdressed-10-10-10-1.png) - rebuilt `LAN` interface on `10.10.10.1/24`
+6. [24-opnsense-wan-routing-failure-before-fix.png](assets/screenshots/24-opnsense-wan-routing-failure-before-fix.png) - intermediate failure after DHCP but before full outbound routing worked
+7. [27-opnsense-lan-firewall-rules.png](assets/screenshots/27-opnsense-lan-firewall-rules.png) - selective firewall policy
+8. [28-routed-lab-validation.png](assets/screenshots/28-routed-lab-validation.png) - successful routed-segment validation
+
+For the full sequence:
+
+- detailed case-study walkthrough: [docs/lab-walkthrough.md](docs/lab-walkthrough.md)
+- screenshot-by-screenshot map: [docs/evidence-manifest.md](docs/evidence-manifest.md)
+
+## Lab Steps
 
 ### Starting Point
 
 The original network was a flat `192.168.1.0/24` LAN with the Spectrum router at `192.168.1.1`. At that point, the Linux Mint client was still just another peer on the same trust zone as the rest of the house.
 
+Evidence:
+
+- [01-main-pc-current-ipconfig.png](assets/screenshots/01-main-pc-current-ipconfig.png)
+- [07-current-switch-physical-port-map.png](assets/screenshots/07-current-switch-physical-port-map.png)
+
 ### What Failed
 
 I expected the `Qotom` firewall to be reachable from the production LAN once it was powered on and connected. That assumption failed, which forced me to stop guessing at management IPs and recover access from a safer path instead.
 
+Evidence:
+
+- [09-qotom-ip-discovery-attempt.png](assets/screenshots/09-qotom-ip-discovery-attempt.png)
+
 ### What I Changed
 
 I used a direct Linux Mint to `OPNsense LAN` connection with a USB-to-Ethernet adapter, captured a configuration backup, documented and removed stale lab state, rebuilt the `LAN` side as `10.10.10.1/24`, enabled Kea DHCP for the staged lab subnet, and then validated the routed path after correcting the WAN-side issue.
+
+Evidence:
+
+- [11-direct-linux-mint-to-qotom-lan.png](assets/screenshots/11-direct-linux-mint-to-qotom-lan.png)
+- [18-opnsense-lan-readdressed-10-10-10-1.png](assets/screenshots/18-opnsense-lan-readdressed-10-10-10-1.png)
+- [24-opnsense-wan-routing-failure-before-fix.png](assets/screenshots/24-opnsense-wan-routing-failure-before-fix.png)
 
 ### Final Validation
 
@@ -93,23 +130,10 @@ What this proves:
 - it now lives behind `OPNsense` on `10.10.10.0/24`
 - it reaches the old LAN only through firewall policy
 
-## Evidence Set
+Evidence:
 
-This README keeps the evidence set curated instead of embedding the full screenshot sequence inline.
-
-- Full case-study walkthrough: [docs/lab-walkthrough.md](docs/lab-walkthrough.md)
-- Screenshot-by-screenshot map: [docs/evidence-manifest.md](docs/evidence-manifest.md)
-
-Key evidence references:
-
-1. [01-main-pc-current-ipconfig.png](assets/screenshots/01-main-pc-current-ipconfig.png) - baseline `MAIN-PC` state on the flat LAN
-2. [07-current-switch-physical-port-map.png](assets/screenshots/07-current-switch-physical-port-map.png) - physical switch and cabling baseline
-3. [09-qotom-ip-discovery-attempt.png](assets/screenshots/09-qotom-ip-discovery-attempt.png) - failed production-side firewall discovery
-4. [11-direct-linux-mint-to-qotom-lan.png](assets/screenshots/11-direct-linux-mint-to-qotom-lan.png) - isolated recovery path from Linux Mint to `OPNsense LAN`
-5. [18-opnsense-lan-readdressed-10-10-10-1.png](assets/screenshots/18-opnsense-lan-readdressed-10-10-10-1.png) - rebuilt `LAN` interface on `10.10.10.1/24`
-6. [24-opnsense-wan-routing-failure-before-fix.png](assets/screenshots/24-opnsense-wan-routing-failure-before-fix.png) - intermediate failure after DHCP but before full outbound routing worked
-7. [27-opnsense-lan-firewall-rules.png](assets/screenshots/27-opnsense-lan-firewall-rules.png) - selective firewall policy
-8. [28-routed-lab-validation.png](assets/screenshots/28-routed-lab-validation.png) - successful routed-segment validation
+- [27-opnsense-lan-firewall-rules.png](assets/screenshots/27-opnsense-lan-firewall-rules.png)
+- [28-routed-lab-validation.png](assets/screenshots/28-routed-lab-validation.png)
 
 ## What I Learned
 
